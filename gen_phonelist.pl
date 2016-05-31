@@ -13,10 +13,7 @@ use Net::LDAP;
 use Net::LDAP::Control::Sort;
 use MediaWiki::API;
 
-# Read in conf file for ignore extensions and always include extensions
-do "/data/tools/gen_phonelist.conf" || die $@ ;
-
-getopts('d');
+getopts('do:s:');
 
 # Set debug
 if( $opt_d )
@@ -24,12 +21,23 @@ if( $opt_d )
 	$DEBUG = 1;
 	$WIKIPAGE = "Phone_List_Test";
 }
+if( ! $opt_o || ! $opt_s)
+{
+	USAGE();
+	exit 1;
+}
+
+$OU             = $opt_o;
+$WIKISECTION    = $opt_s;
+
+# Read in conf file for ignore extensions and always include extensions
+do "/data/tools/gen_phonelist.$OU" || die $@ ;
 
 $PRINTVERSION	= "/data/www/html/wiki.company.com/phonelist.html";
 
 # LDAP statics
 $ADSERVER	= "ad.company.local";
-$SEARCHOU	= "ou=Temecula,dc=company,dc=local";
+$SEARCHOU	= "ou=$OU,dc=company,dc=local";
 $SEARCHUSER	= "CN=Query Account,CN=Users,DC=company,DC=local";
 $SEARCHPASS	= "<changeme123>";
 #$SEARCHATTRS	= "sn, givenname, telephonenumber, info";
@@ -40,7 +48,6 @@ $WIKISERVER	= "wiki.company.com";
 $WIKIAPI	= "https://wiki.company.com/wiki/api.php";
 $WIKIUSER	= "someuser";
 $WIKIPASS	= "<changeme123>";
-$WIKISECTION 	= 1; 
 if( ! $WIKIPAGE ) { $WIKIPAGE = "Phone_List"; }
 
 # write print friendly version
@@ -190,6 +197,6 @@ sub DEBUG
 
 sub USAGE
 {
-	print "Usage: \t$0 [-d debug]\n";
+	print "Usage: \t$0 -o \"AD OU to search\" -s \"Wiki section to update\" [-d debug]\n";
 }
 
